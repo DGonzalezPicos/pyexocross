@@ -3,13 +3,13 @@ absorption
 voigt
 verbose 3
 offset 60.
-mass 23
-temperature 1000
-pressure 0.001000
+mass 24
+temperature 300
+pressure 0.000010
 range 39. 91000.
 R 1000000.0
 pffile 23Na-1H__Rivlin.pf
-output NaH_1000.000000K_0.001000bar.out
+output NaH_300.000000K_0.000010bar.out
 states 23Na-1H__Rivlin.states
 transitions
 	"23Na-1H__Rivlin.trans"
