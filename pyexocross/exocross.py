@@ -24,7 +24,7 @@ class ExoCross:
         self.name = name
         self.resolution = resolution
         
-        path = path if path is not None else os.get_cwd()
+        path = path if path is not None else os.getcwd()
         self.path = pathlib.Path(path)
         self.logger.debug(f' Working in {self.path}')
 

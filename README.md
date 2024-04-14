@@ -1,7 +1,7 @@
 # pyexocross
-**pyexocross** is a Python wrapper for the fortran code **exocross** to generate opacities in the **petitRADTRANS** format.
+**pyexocross** is a Python wrapper to run the fortran code **exocross** and generate opacities in the **petitRADTRANS** format.
 
- **pyexocross** generates and organizes the required files for **exocross** and transforms its output to be used with [petitRADTRANS](https://petitradtrans.readthedocs.io/en/latest/).
+ **pyexocross** generates and organizes the required files for **exocross** and transforms its output to be used directly as  _line-by-line_ opacities in [petitRADTRANS](https://petitradtrans.readthedocs.io/en/latest/).
 
 ## Installation
 To install **pyexocross** you can clone this repository and run the following command:
