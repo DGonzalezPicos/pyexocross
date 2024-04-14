@@ -30,8 +30,6 @@ Now in a python script, import the ExoCross class and create an instance with th
 ```python
 from pyexocross.exocross import ExoCross
 exo = ExoCross('NaH')
-exo.check_input()
-exo.read_definitions_file()
 exo.set_output('NaH_rivlin') # name of linelist
 ```
 Next select a temperature and pressure grid or create your own (examples in `PT_grid/`):
@@ -41,8 +39,8 @@ exo.load_PT_grid(file='PT_grids/PTpaths_test.ls')
 This basic grid contains two temperature and two pressure points, so it will generate 4 cross-section files. To generate the cross-sections run:
 ```python
 path_to_excross = '/your/absolute/path'
-exo.set_exocross_path(path_to_excross)
-exo.xcross_grid(Nprocs=4)
+exo.set_path_exocross(path_to_excross)
+exo.xcross_grid(Nprocs=4) # Nprocs is the number of parallel processes
 ```
 The output will be saved in the `NaH_rivlin` directory (as defined above). These cross-sections can be used directly with petitRADTRANS to generate synthetic spectra by simply placing the output folder in `input_data/opacities/lines/line_by_line`.
 
