@@ -208,8 +208,9 @@ class ExoCross:
         wave_pRT = np.genfromtxt('wlen_petitRADTRANS.dat')
         for i, file_i in enumerate(files):
             self.logger.info(f' Rebinning {file_i} ({i}/{len(files)})')
-            P_str = file_i.name.split('bar')[-2].split('_')[-1]
-            # print(f'P_str = {P_str}')
+            # P_str = file_i.name.split('bar')[-2].split('_')[-1]
+            T_str, P_str = file_i.name.split('_')[:-2]
+            print(f'P_str = {P_str}')
             self.logger.debug(f'P_str = {P_str}')
             P = float(P_str)
             
@@ -226,7 +227,8 @@ class ExoCross:
             # interpolate to the pRT grid
             sig_interpolated_petit = np.interp(wave_pRT, wavelength, sigma)
             
-            T = float(file_i.name.split('K_')[-2].split('_')[-1])
+            # T = float(file_i.name.split('K_')[-2].split('_')[-1])
+            T = float(T_str)
             
             # new_file_i = f'sigma_{T:.0f}.K_{P:.6f}bar.dat'
             new_file_i = self.tmp / f'sigma_{T:.0f}.K_{P:.6f}bar.dat'
