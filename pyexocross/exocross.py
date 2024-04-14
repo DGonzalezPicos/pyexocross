@@ -1,6 +1,8 @@
 import pathlib
 import numpy as np
 import logging
+# set up logging
+logging.basicConfig(level=logging.INFO)
 
 import subprocess as sp
 
@@ -12,7 +14,7 @@ class ExoCross:
     # TODO: make this a environment variable
     
     logger = logging.getLogger('ExoCross')  # Create a class-level logger
-    logger.setLevel(logging.INFO)  # Set logger level to INFO
+    # logger.setLevel(logging.INFO)  # Set logger level to INFO
 
     def __init__(self, name, resolution=1e6):
         
@@ -86,29 +88,35 @@ class ExoCross:
         if not hasattr(self, 'files'):
             self.check_input()
             
-        pffile = self.pf.name
-        states = self.states.name
-        transitions = [t.name for t in self.trans]
+        # pffile = self.pf.name
+        # states = self.states.name
+        # transitions = [t.name for t in self.trans]
+        # use absolute paths instead
+        pffile = str(self.pf)
+        states = str(self.states)
+        transitions = [str(t) for t in self.trans]
         
-        output = f"{self.name}_{temperature:f}K_{pressure:f}bar.out"
+        # out_file = f"{self.name}_{temperature:f}K_{pressure:f}bar.out"
 
         species_str = '\n 0 gamma 0.06 n 0.5 t0 296 ratio 1.\nend'
 
         # write the .inp file
-        inp_out = self.input / f'{self.name}_input_{temperature}_{pressure}.inp'
-        with open(inp_out, 'w') as f:
+        inp_file = self.input / f'{self.name}_input_{temperature:.1f}_{pressure:.0e}.inp'
+        out_file = self.tmp / inp_file.name.replace('.inp', '.out')
+        
+        with open(inp_file, 'w') as f:
             f.write(f'Nprocs {Nprocs}\n')
             f.write('absorption\n')
             f.write('voigt\n')
             f.write('verbose 3\n')
             f.write('offset 60.\n')
             f.write(f'mass {int(np.round(self.mass,0))}\n')
-            f.write(f'temperature {temperature}\n')
-            f.write(f'pressure {pressure:f}\n')
+            f.write(f'temperature {temperature:.1f}\n')
+            f.write(f'pressure {pressure:.0e}\n')
             f.write('range 39. 91000.\n')
-            f.write(f'R {self.resolution}\n')
+            f.write(f'R {self.resolution:.0f}\n')
             f.write(f'pffile {pffile}\n')
-            f.write(f'output {output}\n')
+            f.write(f'output {out_file}\n')
             f.write(f'states {states}\n')
             f.write(f'transitions\n')
             for trans in transitions:
@@ -118,9 +126,9 @@ class ExoCross:
             f.write(f'species {species_str}')
             # close the file
             f.close()
-        self.logger.info(f' Wrote {inp_out}')
+        self.logger.info(f' Wrote {inp_file}')
         
-        return inp_out, output      
+        return inp_file, out_file      
     
     
     def generate_PTpaths(self, files_path, overwrite=False):
@@ -163,13 +171,37 @@ class ExoCross:
     def xcross(self, temperature, pressure, Nprocs=4):
         
         # create input file
-        inp_file, inp_out = self.generate_inp(temperature, pressure, Nprocs)
-        print(inp_out)
+        inp_file, out_file = self.generate_inp(temperature, pressure, Nprocs)
+        print(out_file)
         # run exocross
-        command = f'{self.path_exocross}/xcross.exe <{str(self.input / inp_file)}> {str(self.tmp / inp_out)}'
+        input_file = str(self.input / inp_file)
+        output_file = str(self.tmp / out_file)
+        self.logger.info(f'Running exocross with input file: {input_file}')
+        self.logger.info(f'Output will be saved to: {output_file}')
+        # command = [f"{self.path_exocross}/xcross.exe",
+        #            f"< {input_file}",
+        #            f"> {output_file}"]
+        command = [f"{self.path_exocross}/xcross.exe"]
+
+        arguments = ["<", input_file, ">", output_file]
+
         # call the command and send output to the logger
-        self.logger.info(f'Running: {command}')
-        sp.run(command)
+        # print(command+arguments)
+        # self.logger.info(f'Running: {command}')
+        # pass input and output to the command
+        # sp.run(command+arguments)
+        result = sp.run(["sh", "-c", f"{command[0]} < {input_file} > {output_file}"], capture_output=True)
+        if result.returncode != 0:
+            print("Error running command!")
+            print(result.stderr.decode("utf-8"))  # Decode and print error messages
+        # result = sp.run(command, capture_output=True, stdin=sp.PIPE)
+        # # Check for successful execution (return code 0)
+        # if result.returncode == 0:
+        #     return result.returncode, result.stdout.decode()
+        # else:
+        #     raise RuntimeError(f"xcross.exe exited with non-zero code: {result.returncode}")
+        
+        print('done')
         self.logger.info(f'Finished running {command}')
         # return the output file
         
@@ -185,7 +217,7 @@ if __name__ == '__main__':
     exo.read_definitions_file()
     # exo.generate_PTpaths('/home/dario/phd/pRT_input/input_data/opacities/lines/line_by_line/CO2_main_iso')
     # exo.load_PT_grid()
-    # inp_file, inp_out =exo.generate_inp(temperature=300, pressure=1e-5)
+    # inp_file, out_file =exo.generate_inp(temperature=300, pressure=1e-5)
     exo.xcross(temperature=300, pressure=1e-5, Nprocs=1)
     
     

@@ -1,0 +1,19 @@
+Nprocs 1
+absorption
+voigt
+verbose 3
+offset 60.
+mass 24
+temperature 300.0
+pressure 1e-05
+range 39. 91000.
+R 1000000
+pffile /home/dario/phd/pyexocross/NaH/input/23Na-1H__Rivlin.pf
+output /home/dario/phd/pyexocross/NaH/tmp/NaH_input_300.0_1e-05.out
+states /home/dario/phd/pyexocross/NaH/input/23Na-1H__Rivlin.states
+transitions
+	"/home/dario/phd/pyexocross/NaH/input/23Na-1H__Rivlin.trans"
+end
+species 
+ 0 gamma 0.06 n 0.5 t0 296 ratio 1.
+end
