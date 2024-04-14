@@ -39,6 +39,9 @@ class ExoCross:
         self.output = self.tmp # default output folder
         
         
+        # check if the input folder exists and contains the required files
+        self.check_input()
+        self.read_definitions_file()
         
     def debug(self):
         self.logger.setLevel(logging.DEBUG)
@@ -109,7 +112,9 @@ class ExoCross:
         # TODO: implement this
         pass
     
-    def set_output(self, label):
+    def set_output(self, label=None):
+        
+        label = self.label.lower() if label is None else label
         self.output = self.path / f'{self.name}/{label}'
         self.output.mkdir(parents=True, exist_ok=True)
         
