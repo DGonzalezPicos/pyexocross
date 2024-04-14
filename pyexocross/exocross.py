@@ -174,8 +174,8 @@ class ExoCross:
         inp_file, out_file = self.generate_inp(temperature, pressure, Nprocs)
         input_file = str(self.input / inp_file)
         output_file = str(self.tmp / out_file)
-        self.logger.info(f'Running exocross with input file: {input_file}')
-        self.logger.info(f' Output will be saved to: {output_file}')
+        self.logger.info(f' Running exocross with input file: {input_file}')
+        # self.logger.info(f' Output will be saved to: {output_file}')
         
         command = f"{self.path_exocross}/xcross.exe"
 
@@ -191,7 +191,7 @@ class ExoCross:
         
         assert hasattr(self, 'T_grid'), 'No temperature grid found'
         for T, P in zip(self.T_grid, self.P_grid):
-            self.logger.info(f' Running exocross for T={T} K, P={P} bar')
+            self.logger.info(f' --> T={T} K, P={P} bar')
             self.xcross(T, P, Nprocs)
         
         self.rebin_to_pRT()
@@ -208,7 +208,7 @@ class ExoCross:
         wave_pRT = np.genfromtxt('wlen_petitRADTRANS.dat')
         for i, file_i in enumerate(files):
             self.logger.info(f' Rebinning {file_i} ({i}/{len(files)})')
-            P_str = file_i.split('bar')[-2].split('_')[-1]
+            P_str = file_i.name.split('bar')[-2].split('_')[-1]
             # print(f'P_str = {P_str}')
             self.logger.debug(f'P_str = {P_str}')
             P = float(P_str)
@@ -226,9 +226,10 @@ class ExoCross:
             # interpolate to the pRT grid
             sig_interpolated_petit = np.interp(wave_pRT, wavelength, sigma)
             
-            T = float(file_i.split('K_')[-2].split('_')[-1])
+            T = float(file_i.name.split('K_')[-2].split('_')[-1])
             
-            new_file_i = f'sigma_06_{T:.0f}.K_{P:.6f}bar.dat'
+            # new_file_i = f'sigma_{T:.0f}.K_{P:.6f}bar.dat'
+            new_file_i = self.tmp / f'sigma_{T:.0f}.K_{P:.6f}bar.dat'
             
             # save rebinned cross sections
             np.savetxt(new_file_i, np.column_stack((wave_pRT, sig_interpolated_petit)))
