@@ -43,6 +43,8 @@ class ExoCross:
         self.check_input()
         self.read_definitions_file()
         
+        self.find_hidden_variables() # check if predefined paths are stored in hidden files
+        
     def debug(self):
         self.logger.setLevel(logging.DEBUG)
         return self
@@ -52,14 +54,47 @@ class ExoCross:
         with open('.path_exocross', 'w') as f:
             f.write(str(self.path_exocross))
         return self
-    def find_path_exocross(self):
-        ''' Find the path to the exocross executable'''
-        if not hasattr(self, 'path_exocross'):
-            if '.path_exocross' in os.listdir():
-                with open('.path_exocross', 'r') as f:
-                    self.path_exocross = pathlib.Path(f.read())
+    
+    def find_hidden_variables(self):
+        
+        variables = ['path_exocross', 'path_pRT_lbl']
+        for v in variables:
+            if hasattr(self, v):
+                self.logger.debug(f' Found hidden variable {v}: {getattr(self, v)}')
             else:
-                self.logger.warning(' No exocross path found. Set it with `set_path_exocross()`')
+                if f'.{v}' in os.listdir():
+                    with open(f'.{v}', 'r') as f:
+                        setattr(self, v, pathlib.Path(f.read()))
+                        self.logger.debug(f' Found hidden variable {v}: {getattr(self, v)}')
+        return self
+    
+    
+    def set_path_pRT_input(self, path='pRT_input_data'):
+        
+        if "line_by_line" in path:
+            self.path_pRT_lbl = pathlib.Path(path)
+
+        else:
+            # absolute path to pRT_input_data/
+            self.path_pRT_input = pathlib.Path(path)
+            self.path_pRT_lbl = self.path_pRT_input / 'opacities/lines/line_by_line'
+        assert self.path_pRT_lbl.exists(), f'Path {self.path_pRT_lbl} does not exist'
+        # store the path in a hidden file
+        with open('.path_pRT_lbl', 'w') as f:
+            f.write(str(self.path_pRT_lbl))
+        self.logger.debug(f' Set path to pRT input data: {self.path_pRT_input}')
+        return self
+    
+    def copy_linelist_to_pRT(self, path_pRT_lbl=None):
+        
+        assert hasattr(self, 'output'), 'No output folder found'
+        files_output = sorted(self.output.glob('sigma*'))
+        assert len(files_output) > 0, 'No sigma files found in output folder'
+        assert hasattr(self, 'path_pRT_lbl') or path_pRT_lbl is not None, 'No path to pRT line-by-line folder found'
+        # copy the entire folder
+        self.logger.info(f' Copying {len(files_output)} files to {self.path_pRT_lbl}...')
+        sp.call(["cp", "-r", f"{self.output}", f"{self.path_pRT_lbl}"])
+        self.logger.info(f' Copying successful!')
         return self
         
     def load_PT_grid(self, file='PTpaths.ls'):
@@ -215,6 +250,11 @@ class ExoCross:
         inp_file, out_file = self.generate_inp(temperature, pressure, Nprocs)
         input_file = str(self.input / inp_file)
         output_file = str(self.tmp / out_file)
+        # if output file already exists, skip
+        output_file_xsec = output_file.replace('.out', '.out.xsec')
+        if pathlib.Path(output_file_xsec).exists():
+            self.logger.info(f' {output_file_xsec} already exists. Skipping')
+            return self
         self.logger.info(f' [xcross.exe] {input_file}')
         
         # find the path to the exocross executable
