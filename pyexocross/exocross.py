@@ -16,6 +16,8 @@ class ExoCross:
     path_exocross = pathlib.Path('/data2/dario/pyexocross/exocross') # path to exocross executable 
     # TODO: make this a environment variable
     
+    nice = False # default value for nice command
+    
     logger = logging.getLogger('ExoCross')  # Create a class-level logger
     # logger.setLevel(logging.INFO)  # Set logger level to INFO
 
@@ -219,7 +221,9 @@ class ExoCross:
         
         # find the path to the exocross executable
         self.find_path_exocross()
-        command = f"{self.path_exocross}/xcross.exe"
+        
+        nice_label = 'nice -n 15' if self.nice else ''
+        command = f"{nice_label} {self.path_exocross}/xcross.exe"
 
         # call the command
         result = sp.run(["sh", "-c", f"{command} < {input_file} > {output_file}"], capture_output=True)
@@ -229,12 +233,14 @@ class ExoCross:
         self.logger.info(f' --> finished {input_file}')        
         return self
     
-    def xcross_grid(self, Nprocs=4):
+    def xcross_grid(self, Nprocs=4, nice=False):
         """ Run exocross for all the temperatures and pressures in the grid"""
         
         assert hasattr(self, 'T_grid'), 'No temperature grid found'
         # print section header
         print(f' \n *** xcross grid ***')
+        
+        self.nice = nice
         
         if Nprocs > 1:
             # Create a pool of worker processes
