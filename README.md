@@ -26,13 +26,13 @@ Download these files (or equivalent for your molecule) from [ExoMol](https://www
 - `23Na-1H__Rivlin.states`: File with the energy levels
 - `23Na-1H__Rivlin.trans`: File with the transitions
 
-Now in a python script, import the ExoCross class and create an instance with the molecule of interest:
+Now, in a python script, import the ExoCross class and create an instance with the molecule of interest:
 ```python
 from pyexocross.exocross import ExoCross
 exo = ExoCross('NaH')
 exo.set_output('NaH_rivlin') # name of linelist
 ```
-Next select a temperature and pressure grid or create your own (examples in `PT_grid/`):
+Next, select a temperature and pressure grid or create your own (examples in `PT_grids/`):
 ```python
 exo.load_PT_grid(file='PT_grids/PTpaths_test.ls')
 ```
