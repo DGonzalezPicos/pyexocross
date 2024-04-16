@@ -188,7 +188,8 @@ class ExoCross:
             f.write(f'mass {int(np.round(self.mass,0))}\n')
             f.write(f'temperature {temperature:.1f}\n')
             f.write(f'pressure {pressure:.0e}\n')
-            f.write('range 39. 91000.\n')
+            # f.write('range 39. 91000.\n')
+            f.write('range 300. 33500.\n') # Updated range (from Sam)
             f.write(f'R {self.resolution:.0f}\n')
             f.write(f'pffile {pffile}\n')
             f.write(f'output {out_file}\n')
@@ -259,9 +260,6 @@ class ExoCross:
             return self
         self.logger.info(f' [xcross.exe] {input_file}')
         
-        # find the path to the exocross executable
-        self.find_path_exocross()
-        
         nice_label = 'nice -n 15' if self.nice else ''
         command = f"{nice_label} {self.path_exocross}/xcross.exe"
 
@@ -297,7 +295,11 @@ class ExoCross:
         self.generate_PTpaths()
         return self
     
-    def rebin_to_pRT(self):
+    def _rebin_to_pRT_single(self, file):
+        # TODO: implement multiprocessing for this
+        pass
+    
+    def rebin_to_pRT(self, Nproc=1):
         """ Rebin the cross sections to the pRT grid
         
         Adapted from pRT documentation"""

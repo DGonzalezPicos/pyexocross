@@ -1,6 +1,7 @@
 wlen_petitRADTRANS.dat
 CN/*
 NaH/*
+H2O_181/*
 pyexocross/__pycache__/__init__.cpython-312.pyc
 pyexocross/__pycache__/exocross.cpython-312.pyc
 pyexocross.egg-info/dependency_links.txt
@@ -9,3 +10,5 @@ pyexocross.egg-info/SOURCES.txt
 pyexocross.egg-info/top_level.txt
 .gitignore
 NaH/input/NaH_input_300.0_1e-05.inp
+*pyc
+*.log
