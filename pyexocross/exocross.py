@@ -116,21 +116,19 @@ class ExoCross:
         # self.logger.debug(f'Files: {files}')
         suffixes = [file_i.suffix for file_i in files]
         # chekck the following extensions exist
-        required = ['.def', '.pf', '.states', '.trans']
+        required = ['.def', '.pf', '.states', '.trans'] # .broad is optional
         assert all([ext in suffixes for ext in required]), f'Not all required files found: {required}'
         self.logger.info(f' Found all required files in {self.input}')
         self.files = files
-        # find the files of the required extensions
-        for ext in required:
-            attr = [file_i for file_i in files if file_i.suffix == ext]
-            if ext == '.trans': # allow for several transitions files
-                setattr(self, ext[1:], attr)
-            if ext == '.def':
-                setattr(self, 'defi', attr[0]) # `def`` is not an allowed attribute name
-            else:
-                setattr(self, ext[1:], attr[0])
-                
-        self.trans = np.atleast_1d(self.trans)
+        
+        self.defi = [str(file_i) for file_i in files if file_i.suffix == '.def'][0]
+        self.pf = [str(file_i) for file_i in files if file_i.suffix == '.pf'][0]
+        self.states = [str(file_i) for file_i in files if file_i.suffix == '.states'][0]
+        self.trans = [str(file_i) for file_i in files if file_i.suffix =='.trans']
+        self.logger.info(f' {len(self.trans)} transition files found')
+        
+        self.broad = [str(file_i) for file_i in files if file_i.suffix == '.broad']
+        self.logger.info(f' {len(self.broad)} broadening files found')
         return self
     
     def read_definitions_file(self):
@@ -147,10 +145,6 @@ class ExoCross:
         self.label = f"{self.info['Iso-slug']}__{self.info['Isotopologue dataset name']}"
         self.mass = float(self.info['Isotopologue mass (Da) and (kg)'].split(' ')[0])
         return self        
-    
-    def set_broadening_params(self):
-        # TODO: implement this
-        pass
     
     def set_output(self, label=None):
         
@@ -179,8 +173,14 @@ class ExoCross:
         out_file = self.tmp / inp_file.name.replace('.inp', '.out')
         
         # default broadening
-        # TODO: enable user to change this in 'set_broadening_params()'
-        species_str = '\n 0 gamma 0.06 n 0.5 t0 296 ratio 1.\nend'
+        if len(self.broad) == 0:
+            broadening = ['0 gamma 0.06 n 0.5 t0 296 ratio 1.']
+        else:
+            broadening = []
+            for i, broad_i in enumerate(self.broad):
+                x = 0.86 if 'H2.broad' in broad_i else 0.14 # FIXME: quick fix for now
+                broadening.append(f'{i} gamma 0.06 0.5 t0 296 file {broad_i} model J ratio {x}')
+        
 
         with open(inp_file, 'w') as f:
             f.write(f'Nprocs {Nprocs}\n')
@@ -202,7 +202,11 @@ class ExoCross:
                 f.write(f'\t"{trans}"\n')
                     
             f.write('end\n')
-            f.write(f'species {species_str}')
+            f.write('species\n')
+            for broad in broadening:
+                f.write(f'\t{broad}\n')
+            f.write('end')
+
             f.close()
         self.logger.debug(f' Wrote {inp_file}')
         
