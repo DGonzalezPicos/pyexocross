@@ -99,10 +99,13 @@ class ExoCross:
         self.logger.info(f' Copying successful!')
         return self
         
-    def load_PT_grid(self, file='PTpaths.ls'):
+    def load_PT_grid(self, file='PTpaths.ls', invert=False):
         """ Load the pressure and temperature grid from a file used by pRT:
         3 columns = (P, T, cross sections files)"""
-        self.P_grid, self.T_grid, _ = np.genfromtxt(file).T    
+        self.P_grid, self.T_grid, _ = np.genfromtxt(file).T   
+        if invert:
+            self.P_grid = self.P_grid[::-1]
+            self.T_grid = self.T_grid[::-1] 
         return self
     
     def check_input(self):
@@ -254,7 +257,8 @@ class ExoCross:
         input_file = str(self.input / inp_file)
         output_file = str(self.tmp / out_file)
         # if output file already exists, skip
-        output_file_xsec = output_file.replace('.out', '.out.xsec')
+        # output_file_xsec = output_file.replace('.out', '.out.xsec')
+        output_file_xsec = output_file # FIXME: check this (quick fix for now)
         if pathlib.Path(output_file_xsec).exists():
             self.logger.info(f' {output_file_xsec} already exists. Skipping')
             return self
@@ -268,7 +272,8 @@ class ExoCross:
         if result.returncode != 0:
             print(result.stderr.decode("utf-8"))  # Decode and print error messages
         
-        self.logger.info(f' --> finished {input_file}')        
+        self.logger.info(f' --> finished {input_file}')
+                
         return self
     
     def xcross_grid(self, Nprocs=4, nice=False):
@@ -282,6 +287,9 @@ class ExoCross:
         
         if Nprocs > 1:
             # Create a pool of worker processes
+            print(f' Grid with {len(self.T_grid)} points')
+            print(f' T = {self.T_grid.min()} - {self.T_grid.max()}')
+            print(f' P = {self.P_grid.min()} - {self.P_grid.max()}')
             with Pool(processes=Nprocs) as pool:
                 # Use pool.starmap to unpack arguments for each run_xcross call
                 pool.starmap(self.xcross, zip(self.T_grid, self.P_grid))
