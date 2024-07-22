@@ -179,7 +179,7 @@ class ExoCross:
             broadening = []
             for i, broad_i in enumerate(self.broad):
                 x = 0.86 if 'H2.broad' in broad_i else 0.14 # FIXME: quick fix for now
-                broadening.append(f'{i} gamma 0.06 0.5 t0 296 file {broad_i} model J ratio {x}')
+                broadening.append(f'{i} gamma 0.06 n 0.5 t0 296 file "{broad_i}" model J ratio {x}')
         
 
         with open(inp_file, 'w') as f:
@@ -253,7 +253,7 @@ class ExoCross:
         return self
     
     
-    def xcross(self, temperature, pressure, Nprocs=1):
+    def xcross(self, temperature, pressure, Nprocs=1, overwrite=False):
         """ Main function to run exocross with the given temperature and pressure"""
         
         # create input file
@@ -263,16 +263,19 @@ class ExoCross:
         # if output file already exists, skip
         # output_file_xsec = output_file.replace('.out', '.out.xsec')
         output_file_xsec = output_file # FIXME: check this (quick fix for now)
-        if pathlib.Path(output_file_xsec).exists():
+        if pathlib.Path(output_file_xsec).exists() and not overwrite:
             self.logger.info(f' {output_file_xsec} already exists. Skipping')
             return self
         self.logger.info(f' [xcross.exe] {input_file}')
         
-        nice_label = 'nice -n 15' if self.nice else ''
-        command = f"{nice_label} {self.path_exocross}/xcross.exe"
+        # nice_label = 'nice -n 15' if self.nice else ''
+        command = f"{self.path_exocross}/xcross.exe"
+        if self.nice:
+            command = f"nice -n 15 {command}"
 
         # call the command
         result = sp.run(["sh", "-c", f"{command} < {input_file} > {output_file}"], capture_output=True)
+
         if result.returncode != 0:
             print(result.stderr.decode("utf-8"))  # Decode and print error messages
         
@@ -394,8 +397,8 @@ class ExoCross:
         # 1) create the list of files
         files = sorted(self.tmp.glob('sigma*bar.dat'))
         files = [f.name for f in files] # keep only the name
-        
-        self.logger.info(f' Found {len(files)} files in output folder')
+        self.logger.info(f' Shortening {len(files)} files...')
+        # self.logger.info(f' Found {len(files)} files in output folder')
         np.savetxt(self.tmp / 'sigma_list.ls', files, fmt='%s')
         
         # 2) create short_stream_lambs_mass.dat
@@ -415,7 +418,7 @@ class ExoCross:
         # copy output files to the output folder
         if self.output != self.tmp:
             sp.run(["sh", "-c", f"cp -r {self.tmp}/short_stream/* {self.output}"])
-        
+        self.logger.info(f' Shortening successful!')
         return self
 
         
